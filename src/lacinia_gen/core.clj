@@ -36,10 +36,10 @@
 (defn- object [fields]
   (fn [depth all-gens]
     (let [fields (keep (fn [[k {:keys [type]}]]
-                         (when (< (get depth k 0) 2)
+                         (when (pos? (get depth k 1))
                            (gen/fmap (fn [v]
                                        {k v})
-                                     (field (update depth k (fnil inc 0)) all-gens type))))
+                                     (field (update depth k (fnil dec 1)) all-gens type))))
                        fields)]
       (gen/fmap
        (fn [kvs]
@@ -61,9 +61,16 @@
   and returns a generator for that object, e.g.
 
   (let [g (generator my-lacinia-schema)]
-    (gen/sample (g :my-object) 10))"
-  [schema]
-  (let [all-gens (make-gens (:enums schema) (:objects schema))
-        depth {}]
+    (gen/sample (g :my-object) 10))
+
+  Options:
+   - depth
+     A map of object keys to the depth they should recurse to in cyclical graphs
+     e.g. {:parent 1
+           :child 2}"
+  [schema & [opts]]
+  (let [{:keys [depth]
+         :or {depth {}}} opts
+        all-gens (make-gens (:enums schema) (:objects schema))]
     (fn [type]
       ((get all-gens type) depth all-gens))))

@@ -45,18 +45,41 @@
                           :player {:fields {:name {:type 'String}
                                             :team {:type :team}}}}}]
 
-    (let [gen (lgen/generator schema)]
+    (testing "defaults to one level"
+      (let [gen (lgen/generator schema)]
 
-      (let [v (g/sample (gen :team) 10)]
-        (is (every? (fn [team]
-                      (and (:players team)
-                           (or (empty? (:players team))
-                               (:team (first (:players team))))))
-                    v)))
+        (let [v (g/sample (gen :team) 10)]
+          (is (every? (fn [team]
+                        (and (:players team)
+                             (or (empty? (:players team))
+                                 (:team (first (:players team))))
+                             ;; team has players and those players have a team, but no deeper
+                             (not (-> team :players first :team :players))))
+                      v)))
 
-      (let [v (g/sample (gen :player) 10)]
-        (is (every? (fn [player]
-                      (and (:team player)
-                           (or (empty? (:players (:team player)))
-                               (:players (:team player)))))
-                    v))))))
+        (let [v (g/sample (gen :player) 10)]
+          (is (every? (fn [player]
+                        (and (:team player)
+                             (or (empty? (:players (:team player)))
+                                 (:players (:team player)))
+                             (not (-> player :team :players first :team))))
+                      v)))))
+
+    (testing "can override recursion depth"
+
+      (testing "no recursion"
+        (let [gen (lgen/generator schema {:depth {:team 0}})]
+
+          (let [v (g/sample (gen :team) 10)]
+            (is (every? (fn [team]
+                          (and (:players team)
+                               (or (empty? (:players team))
+                                   (not (:team (first (:players team)))))))
+                        v)))))
+
+      (testing "more recursion"
+        (let [gen (lgen/generator schema {:depth {:team 2
+                                                  :players 2}})]
+
+          (let [v (last (g/sample (gen :team) 10))]
+            (is (-> v :players first :team :players first :team))))))))
