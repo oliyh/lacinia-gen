@@ -70,6 +70,16 @@ It supports recursive graphs, so the following works too:
            {:name "éíª6", :team {:name "v"}})}}
 ```
 
+If you want to limit the depth to which certain objects recurse, you can do so with the following option:
+
+```clojure
+(lgen/generator schema {:depth {:team 0}})
+```
+
+This will ensure that `:team` only appears once in the graph; the team will have players, but it prevents the players from having a team.
+The default value for all objects is 1, meaning each will recur once (a team will have players which have a team which has players, but no further).
+You can set any integer value you wish.
+
 ### Custom scalars
 
 If your schema contains [custom scalars](http://lacinia.readthedocs.io/en/latest/custom-scalars.html) you will need to
