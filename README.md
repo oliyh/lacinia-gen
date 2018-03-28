@@ -51,7 +51,7 @@ It supports recursive graphs, so the following works too:
 
 ```clojure
 (let [schema {:objects {:team {:fields {:name {:type 'String}
-                                          :players {:type '(list :player)}}}
+                                        :players {:type '(list :player)}}}
                           :player {:fields {:name {:type 'String}
                                             :team {:type :team}}}}}]
 
@@ -68,6 +68,26 @@ It supports recursive graphs, so the following works too:
            {:name "o", :team {:name "æ8"}}
            {:name "/ç", :team {:name "ãL"}}
            {:name "éíª6", :team {:name "v"}})}}
+```
+
+### Custom scalars
+
+If your schema contains [custom scalars](http://lacinia.readthedocs.io/en/latest/custom-scalars.html) you will need to
+provide generators for them. You can do so in the following way:
+
+```clojure
+(let [schema {:scalars {:Custom {:parse :parse-custom
+                                 :serialize :serialize-custom}}
+                :objects {:obj-with-custom
+                          {:fields
+                           {:custom {:type :Custom}
+                            :custom-list {:type '(list :Custom)}}}}}]
+
+  (let [gen (lgen/generator schema {:scalars {:Custom gen/int}})]
+    (g/sample (gen :obj-with-custom) 10)))
+
+;; => {:custom 23
+       :custom-list (-1 4 16)}
 ```
 
 ## License
