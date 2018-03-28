@@ -3,6 +3,8 @@
 `lacinia-gen` lets you generate graphs of data using your [lacinia](https://github.com/walmartlabs/lacinia) schema,
 so you can make your tests more rigorous.
 
+[![Clojars Project](https://img.shields.io/clojars/v/lacinia-gen.svg)](https://clojars.org/lacinia-gen)
+
 ## Usage
 
 ```clojure
@@ -99,6 +101,10 @@ provide generators for them. You can do so in the following way:
 ;; => {:custom 23
        :custom-list (-1 4 16)}
 ```
+
+## Development
+
+[![CircleCI](https://circleci.com/gh/oliyh/lacinia-gen.svg?style=svg)](https://circleci.com/gh/oliyh/lacinia-gen)
 
 ## License
 
