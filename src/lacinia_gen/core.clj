@@ -1,45 +1,44 @@
 (ns lacinia-gen.core
   (:require [clojure.test.check.generators :as gen]))
 
-(defn- primitive [type]
-  (get {'String gen/string
-        'Float gen/double
-        'Int gen/int
-        'Boolean gen/boolean}
-       type))
+(def ^:private base-scalars
+  {'String gen/string
+   'Float gen/double
+   'Int gen/int
+   'Boolean gen/boolean})
 
 (defn- enum [values]
   (let [g (gen/elements values)]
     (constantly g)))
 
-(defn- field [depth all-gens type]
+(defn- field [depth scalars all-gens type]
   (cond
     ;; sub object
     (and (keyword? type)
          (contains? all-gens type))
-    ((get all-gens type) depth all-gens)
+    ((get all-gens type) depth scalars all-gens)
 
     ;; list of type
     (and (list? type)
          (= 'list (first type)))
-    (gen/list (field depth all-gens (second type)))
+    (gen/list (field depth scalars all-gens (second type)))
 
     ;; non-nullable
     (and (list? type)
          (= 'non-null (first type)))
-    (gen/such-that (complement nil?) (field depth all-gens (second type)))
+    (gen/such-that (complement nil?) (field depth scalars all-gens (second type)))
 
-    ;; primitive
+    ;; scalar
     :else
-    (primitive type)))
+    (scalars type)))
 
 (defn- object [fields]
-  (fn [depth all-gens]
+  (fn [depth scalars all-gens]
     (let [fields (keep (fn [[k {:keys [type]}]]
                          (when (pos? (get depth k 1))
                            (gen/fmap (fn [v]
                                        {k v})
-                                     (field (update depth k (fnil dec 1)) all-gens type))))
+                                     (field (update depth k (fnil dec 1)) scalars all-gens type))))
                        fields)]
       (gen/fmap
        (fn [kvs]
@@ -67,10 +66,17 @@
    - depth
      A map of object keys to the depth they should recurse to in cyclical graphs
      e.g. {:parent 1
-           :child 2}"
+           :child 2}
+
+  - scalars
+    A map of custom scalar types to the generators to be used for them.
+    e.g. {:DateTime (gen/...)}
+  "
   [schema & [opts]]
-  (let [{:keys [depth]
-         :or {depth {}}} opts
-        all-gens (make-gens (:enums schema) (:objects schema))]
+  (let [{:keys [depth scalars]
+         :or {depth {}
+              scalars {}}} opts
+        all-gens (make-gens (:enums schema) (:objects schema))
+        scalars (merge base-scalars scalars)]
     (fn [type]
-      ((get all-gens type) depth all-gens))))
+      ((get all-gens type) depth scalars all-gens))))

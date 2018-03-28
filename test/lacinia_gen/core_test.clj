@@ -1,7 +1,8 @@
 (ns lacinia-gen.core-test
   (:require [clojure.test :refer [deftest is testing]]
             [lacinia-gen.core :as lgen]
-            [clojure.test.check.generators :as g]))
+            [clojure.test.check.generators :as g]
+            [clojure.test.check.generators :as gen]))
 
 (defn- position? [position]
   (contains? #{:goalkeeper :defence :attack} position))
@@ -83,3 +84,22 @@
 
           (let [v (last (g/sample (gen :team) 10))]
             (is (-> v :players first :team :players first :team))))))))
+
+
+(deftest custom-scalar-test
+  (let [schema {:scalars {:Custom {:parse :parse-custom
+                                   :serialize :serialize-custom}}
+                :objects {:obj-with-custom
+                          {:fields
+                           {:custom {:type :Custom}
+                            :custom-list {:type '(list :Custom)}}}}}]
+
+    (testing "single custom value"
+      (let [gen (lgen/generator schema {:scalars {:Custom gen/int}})
+            v (g/sample (gen :obj-with-custom) 10)]
+        (is (every? int? (map :custom v)))))
+
+    (testing "list of custom values"
+      (let [gen (lgen/generator schema {:scalars {:Custom gen/int}})
+            v (g/sample (gen :obj-with-custom) 10)]
+        (is (every? #(every? int? %) (map :custom-list v)))))   ))
