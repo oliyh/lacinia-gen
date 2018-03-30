@@ -85,6 +85,18 @@
           (let [v (last (g/sample (gen :team) 10))]
             (is (-> v :players first :team :players first :team))))))))
 
+(deftest width-test
+  (let [schema {:objects {:team {:fields {:name {:type 'String}
+                                          :players {:type '(list :player)}}}
+                          :player {:fields {:name {:type 'String}
+                                            :team {:type :team}}}}}]
+
+    (testing "limits width to the value provided"
+      (let [gen (lgen/generator schema {:width {:player 2}})]
+
+        (let [v (g/sample (gen :team) 10)]
+          (is (every? (fn [team] (< (count (:players team)) 3)) v)))))))
+
 
 (deftest custom-scalar-test
   (let [schema {:scalars {:Custom {:parse :parse-custom

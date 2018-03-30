@@ -11,34 +11,37 @@
   (let [g (gen/elements values)]
     (constantly g)))
 
-(defn- field [depth scalars all-gens type]
+(defn- field [depth width scalars all-gens type]
   (cond
     ;; sub object
     (and (keyword? type)
          (contains? all-gens type))
-    ((get all-gens type) depth scalars all-gens)
+    ((get all-gens type) depth width scalars all-gens)
 
     ;; list of type
     (and (list? type)
          (= 'list (first type)))
-    (gen/list (field depth scalars all-gens (second type)))
+    (let [g (gen/list (field depth width scalars all-gens (second type)))]
+      (if-let [w (get width (second type))]
+        (gen/resize w g)
+        g))
 
     ;; non-nullable
     (and (list? type)
          (= 'non-null (first type)))
-    (gen/such-that (complement nil?) (field depth scalars all-gens (second type)))
+    (gen/such-that (complement nil?) (field depth width scalars all-gens (second type)))
 
     ;; scalar
     :else
     (scalars type)))
 
 (defn- object [fields]
-  (fn [depth scalars all-gens]
+  (fn [depth width scalars all-gens]
     (let [fields (keep (fn [[k {:keys [type]}]]
                          (when (pos? (get depth k 1))
                            (gen/fmap (fn [v]
                                        {k v})
-                                     (field (update depth k (fnil dec 1)) scalars all-gens type))))
+                                     (field (update depth k (fnil dec 1)) width scalars all-gens type))))
                        fields)]
       (gen/fmap
        (fn [kvs]
@@ -68,15 +71,20 @@
      e.g. {:parent 1
            :child 2}
 
-  - scalars
-    A map of custom scalar types to the generators to be used for them.
-    e.g. {:DateTime (gen/...)}
+   - width
+     A map of object keys to the maximum number of items that should be present in lists of that object
+     e.g. {:listed-object 3}
+
+   - scalars
+     A map of custom scalar types to the generators to be used for them.
+     e.g. {:DateTime (gen/...)}
   "
   [schema & [opts]]
-  (let [{:keys [depth scalars]
+  (let [{:keys [depth width scalars]
          :or {depth {}
+              width {}
               scalars {}}} opts
         all-gens (make-gens (:enums schema) (:objects schema))
         scalars (merge base-scalars scalars)]
     (fn [type]
-      ((get all-gens type) depth scalars all-gens))))
+      ((get all-gens type) depth width scalars all-gens))))

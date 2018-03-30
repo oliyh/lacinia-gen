@@ -82,6 +82,14 @@ This will ensure that `:team` only appears once in the graph; the team will have
 The default value for all objects is 1, meaning each will recur once (a team will have players which have a team which has players, but no further).
 You can set any integer value you wish.
 
+If you want to limit the number of items in lists, you can do so with the following option:
+
+```clojure
+(lgen/generator schema {:width {:player 2}})
+```
+
+This will ensure that lists of `:player` will have a maximum size of 2.
+
 ### Custom scalars
 
 If your schema contains [custom scalars](http://lacinia.readthedocs.io/en/latest/custom-scalars.html) you will need to
