@@ -43,7 +43,13 @@
       streamers (attach-streamers streamers)
       :always schema/compile)))
 
-(defn generate-fn [schema]
+(defn generate-fn
+  "Call with an (uncompiled) lacinia schema to return a function which
+  can generate data for an arbitrary query
+
+  e.g. (let [f (generate-fn {:objects {:team ... }})]
+         (f \"query { teams { teamName } }\" {}))"
+  [schema]
   (let [s (compile-generating-schema schema)
         gen (lgen/generator schema)]
     (fn [query variables]

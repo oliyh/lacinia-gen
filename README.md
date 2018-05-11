@@ -1,11 +1,16 @@
 # lacinia-gen
 
-`lacinia-gen` lets you generate graphs of data using your [lacinia](https://github.com/walmartlabs/lacinia) schema,
-so you can make your tests more rigorous.
+`lacinia-gen` lets you generate graphs of data using your [lacinia](https://github.com/walmartlabs/lacinia) schema
+and result graphs from GraphQL queries so you can make your tests more rigorous in both Clojure and Clojurescript.
 
 [![Clojars Project](https://img.shields.io/clojars/v/lacinia-gen.svg)](https://clojars.org/lacinia-gen)
 
 ## Usage
+
+### Full graph
+
+You can create a generator for a full graph from any root by using the `generator` function in
+`lacinia-gen.core`. This resolves all reachable nodes in the graph up to the desired recursion depth.
 
 ```clojure
 (require '[lacinia-gen.core :as lgen])
@@ -108,6 +113,63 @@ provide generators for them. You can do so in the following way:
 
 ;; => {:custom 23
        :custom-list (-1 4 16)}
+```
+
+### Query result
+
+If you have a GraphQL query and wish to generate data for its result, you can use `lacinia-gen.query`.
+
+```clojure
+(require '[lacinia-gen.query :as query])
+
+(def schema '{:enums {:position {:values [:goalkeeper :defence :attack]}}
+              :objects {:team {:fields {:wins {:type Int}
+                                        :losses {:type Int}
+                                        :players {:type (list :player)}}}
+                        :player {:fields {:name {:type String}
+                                          :age {:type Int}
+                                          :position {:type :position}}}}
+              :queries {:teams {:type (list :team)
+                                :resolve :resolve-teams}}})
+
+(let [f (query/generate-fn schema)]
+    (f "query { teams { wins players { name } } }" {}))
+
+;; => {:data
+       {:teams
+        ({:wins 0, :players ()}
+         {:wins 0, :players ({:name ""})}
+         {:wins 1, :players ()}
+         {:wins 0, :players ({:name "÷ "} {:name "¢"})}
+         {:wins 1, :players ()})}}
+```
+
+Currently the queries are interpreted by Lacinia and as such require the JVM. This means
+`generate-fn` cannot be used from Clojurescript. The two macros `generate-query` and
+`generate-query*` may be used in Clojurescript and will evaluate to the generated result
+of the query.
+
+```clojure
+(ns my.test
+  (:require-macros [lacinia-gen.query :refer [generate-data*]]))
+
+(def schema '{:objects {:team {:fields {:wins {:type Int}
+                                        :losses {:type Int}}}}
+              :queries {:teams {:type (list :team)
+                                :resolve :resolve-teams}}})
+
+(def query "query { teams { wins } }")
+
+(def data (generate-data* schema query {}))
+
+data
+;; => {:data
+       {:teams
+        ({:wins 0}
+         {:wins 0}
+         {:wins 0)}
+         {:wins -3}
+         {:wins 0})}
 ```
 
 ## Development
