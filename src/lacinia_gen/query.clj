@@ -4,7 +4,8 @@
             [com.walmartlabs.lacinia.schema :as schema]
             [com.walmartlabs.lacinia.util :refer [attach-resolvers attach-streamers]]
             [clojure.test.check.generators :as g]
-            [clojure.string :as stringB]))
+            [clojure.string :as string]
+            [cljs.analyzer :as cljs]))
 
 (defn- resolver-keys [objects]
   (->> objects
@@ -60,8 +61,13 @@
            (str "query "))
       variables))
 
-(defn- maybe-resolve [s]
-  (if (symbol? s) @(resolve s) s))
+(defn- maybe-resolve [cljs-env s]
+  (if (symbol? s)
+    (if cljs-env
+      (-> (cljs/resolve-var cljs-env s (cljs/confirm-var-exists-throw))
+          :meta
+          ::source)
+      @(resolve s)) s))
 
 (defmacro generate-query*
   "For use from Clojurescript where arguments are symbols that need resolving.
@@ -75,6 +81,8 @@
 
   (generate-query* schema team-query {})"
   [schema query variables]
-  `(generate-query ~(maybe-resolve schema)
-                   ~(maybe-resolve query)
-                   ~(maybe-resolve variables)))
+  (let [cljs-env &env
+        maybe-resolve (partial maybe-resolve cljs-env)]
+    `(generate-query ~(maybe-resolve schema)
+                     ~(maybe-resolve query)
+                     ~(maybe-resolve variables))))
