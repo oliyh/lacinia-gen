@@ -60,6 +60,9 @@
            (str "query "))
       variables))
 
+(defn- maybe-resolve [s]
+  (if (symbol? s) @(resolve s) s))
+
 (defmacro generate-query*
   "For use from Clojurescript where arguments are symbols that need resolving.
 
@@ -72,6 +75,6 @@
 
   (generate-query* schema team-query {})"
   [schema query variables]
-  `(generate-query ~(if (symbol? schema) @(resolve schema) schema)
-                   ~(if (symbol? query) @(resolve query) query)
-                   ~(if (symbol? variables) @(resolve variables) variables)))
+  `(generate-query ~(maybe-resolve schema)
+                   ~(maybe-resolve query)
+                   ~(maybe-resolve variables)))

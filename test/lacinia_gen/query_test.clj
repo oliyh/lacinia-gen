@@ -19,6 +19,31 @@
       (is (:teams data))
       (is (-> data :teams count pos?))
       (is (-> data :teams first :wins int?))
-      (println (is (->> data :teams (keep (comp not-empty :players)))))
       (is (->> data :teams (keep (comp not-empty :players)) first count pos?))
       (is (->> data :teams (keep (comp not-empty :players)) ffirst :name string?)))))
+
+(def literal-macro-data
+  (query/generate-query {:objects {:team {:fields {:wins {:type Int}}}}
+                         :queries {:teams {:type (list :team)
+                                           :resolve :resolve-teams}}}
+                        "query { teams { wins } }"
+                        {}))
+
+(deftest generate-query-test
+  (is literal-macro-data)
+  (let [data (:data literal-macro-data)]
+      (is (:teams data))
+      (is (-> data :teams count pos?))
+      (is (-> data :teams first :wins int?))))
+
+(def query "query { teams { wins players { name } } }")
+
+(def resolving-macro-data
+  (query/generate-query* schema query {}))
+
+(deftest generate-query*-test
+  (is resolving-macro-data)
+  (let [data (:data resolving-macro-data)]
+      (is (:teams data))
+      (is (-> data :teams count pos?))
+      (is (-> data :teams first :wins int?))))
