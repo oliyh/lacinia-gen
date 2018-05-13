@@ -1,5 +1,6 @@
 (ns lacinia-gen.query
   (:require [lacinia-gen.core :as lgen]
+            [lacinia-gen.def :as def]
             [com.walmartlabs.lacinia :as lacinia]
             [com.walmartlabs.lacinia.schema :as schema]
             [com.walmartlabs.lacinia.util :refer [attach-resolvers attach-streamers]]
@@ -69,11 +70,13 @@
 
 (defn- maybe-resolve [cljs-env s]
   (if (symbol? s)
-    (if cljs-env
-      (-> (cljs/resolve-var cljs-env s (cljs/confirm-var-exists-throw))
-          :meta
-          ::source)
-      @(resolve s)) s))
+    (if-let [v (resolve s)]
+      @v
+      (if cljs-env
+        (-> (cljs/resolve-var cljs-env s (cljs/confirm-var-exists-throw))
+            :meta
+            ::def/source)))
+    s))
 
 (defmacro generate-query*
   "For use from Clojurescript where arguments are symbols that need resolving.
