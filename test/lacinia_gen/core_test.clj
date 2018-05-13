@@ -18,13 +18,14 @@
        (every? player? (:players team))))
 
 (deftest basic-test
-  (let [schema {:enums {:position {:values [:goalkeeper :defence :attack]}}
-                :objects {:team {:fields {:wins {:type 'Int}
-                                          :losses {:type 'Int}
-                                          :players {:type '(list :player)}}}
-                          :player {:fields {:name {:type 'String}
-                                            :age {:type 'Int}
-                                            :position {:type :position}}}}}]
+  (let [schema '{:enums {:position {:values [:goalkeeper :defence :attack]}}
+                 :objects {:team {:fields {:wins {:type Int}
+                                           :losses {:type Int}
+                                           :players {:type (list :player)}}}
+                           :player {:fields {:name {:type String}
+                                             :age {:type Int}
+                                             :position {:type :position}}}}
+                 :queries {:teams {:type (list :team)}}}]
 
     (let [gen (lgen/generator schema)]
 
@@ -38,7 +39,11 @@
 
       (testing "can generate composite objects"
         (let [v (g/sample (gen :team) 10)]
-          (is (every? team? v)))))))
+          (is (every? team? v))))
+
+      (testing "can generate query roots"
+        (let [v (g/generate (gen :teams))]
+          (is v))))))
 
 (deftest recursion-test
   (let [schema {:objects {:team {:fields {:name {:type 'String}

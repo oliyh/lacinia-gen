@@ -48,7 +48,7 @@
          (apply merge kvs))
        (apply gen/tuple fields)))))
 
-(defn- make-gens [enums objects]
+(defn- make-gens [enums objects queries]
   (merge (reduce-kv (fn [all-gens k {:keys [fields]}]
                       (assoc all-gens k (object fields)))
                     {}
@@ -56,7 +56,12 @@
          (reduce-kv (fn [all-gens k {:keys [values]}]
                       (assoc all-gens k (enum values)))
                     {}
-                    enums)))
+                    enums)
+         (reduce-kv (fn [all-gens k {:keys [type]}]
+                      (assoc all-gens k (fn [depth width scalars all-gens]
+                                          (field depth width scalars all-gens type))))
+                    {}
+                    queries)))
 
 (defn generator
   "Given a lacinia schema returns a function which takes an object key as an argument
@@ -84,7 +89,7 @@
          :or {depth {}
               width {}
               scalars {}}} opts
-        all-gens (make-gens (:enums schema) (:objects schema))
+        all-gens (make-gens (:enums schema) (:objects schema) (:queries schema))
         scalars (merge base-scalars scalars)]
     (fn [type]
       ((get all-gens type) depth width scalars all-gens))))
