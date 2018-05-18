@@ -14,7 +14,7 @@
                                 :resolve :resolve-teams}}})
 
 (deftest generate-fn-test
-  (let [f (query/generate-fn schema)]
+  (let [f (query/generate-fn schema {})]
 
     (let [data (:data (f "query { teams { wins players { name } } }" {}))]
       (is (:teams data))
@@ -28,6 +28,7 @@
                          :queries {:teams {:type (list :team)
                                            :resolve :resolve-teams}}}
                         "query { teams { wins } }"
+                        {}
                         {}))
 
 (deftest generate-query-test
@@ -40,7 +41,7 @@
 (def query "query { teams { wins players { name } } }")
 
 (def resolving-macro-data
-  (query/generate-query* schema query {}))
+  (query/generate-query* schema query {} {}))
 
 (deftest generate-query*-test
   (is resolving-macro-data)

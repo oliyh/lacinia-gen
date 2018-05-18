@@ -49,22 +49,27 @@
   "Call with an (uncompiled) lacinia schema to return a function which
   can generate data for an arbitrary query
 
+  Opts are as per lacinia-gen.core/generator
+
   e.g. (let [f (generate-fn {:objects {:team ... }})]
          (f \"query { teams { teamName } }\" {}))"
-  [schema]
+  [schema opts]
   (let [s (compile-generating-schema schema)
-        gen (lgen/generator schema)]
+        gen (lgen/generator schema opts)]
     (fn [query variables]
       (lacinia/execute s query variables {:gen gen}))))
 
 (defmacro generate-query
   "For use with literal schema, query and variables arguments
 
+  Opts are as per lacinia-gen.core/generator
+
   e.g. (generate-query {:objects {:team ... }}
                        \"query { teams { teamName } }\"
+                       {}
                        {})"
-  [schema query variables]
-  `'~((generate-fn schema)
+  [schema query variables opts]
+  `'~((generate-fn schema opts)
       (->> (string/replace query #"^query|subscription" "")
            (str "query "))
       variables))
@@ -85,14 +90,17 @@
    N.B. you must use defquery to define queries in Clojurescript as the value
    cannot be resolved from a normal var.
 
+  Opts are as per lacinia-gen.core/generator
+
   e.g.
   (require '[my.project.graphql :refer [schema]])
   (defquery team-query \"query { teams { teamName } }\")
 
-  (generate-query* schema team-query {})"
-  [schema query variables]
+  (generate-query* schema team-query {} {})"
+  [schema query variables opts]
   (let [cljs-env &env
         maybe-resolve (partial maybe-resolve cljs-env)]
     `(generate-query ~(maybe-resolve schema)
                      ~(maybe-resolve query)
-                     ~(maybe-resolve variables))))
+                     ~(maybe-resolve variables)
+                     ~(maybe-resolve opts))))
