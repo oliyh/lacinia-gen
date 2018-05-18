@@ -21,11 +21,12 @@
 
 (defn- generating-resolver [context arguments parent]
   (let [generator (:gen context)
-        {:keys [field field-definition]} (::lacinia/selection context)
+        {:keys [field field-definition leaf?]} (::lacinia/selection context)
         many? (= :list (get-in field-definition [:type :kind]))]
-    (if many?
-      (g/sample (generator (get-in field-definition [:type :type :type])) 5)
-      (g/generate (generator :field)))))
+    (cond
+      leaf? (get parent field)
+      many? (g/sample (generator (get-in field-definition [:type :type :type])) 5)
+      :else (g/generate (generator :field)))))
 
 (defn- resolver-map [{:keys [objects queries subscriptions]}]
   (let [resolver-keys (into (resolver-keys objects)

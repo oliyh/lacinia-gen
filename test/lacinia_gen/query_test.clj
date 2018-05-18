@@ -6,7 +6,8 @@
               :objects {:team {:fields {:wins {:type Int}
                                         :losses {:type Int}
                                         :players {:type (list :player)}}}
-                        :player {:fields {:name {:type String}
+                        :player {:fields {:name {:type String
+                                                 :resolve :resolve-leaf}
                                           :age {:type Int}
                                           :position {:type :position}}}}
               :queries {:teams {:type (list :team)
