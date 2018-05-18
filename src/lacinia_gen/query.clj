@@ -78,10 +78,13 @@
   (if (symbol? s)
     (if-let [v (resolve s)]
       @v
-      (if cljs-env
-        (-> (cljs/resolve-var cljs-env s (cljs/confirm-var-exists-throw))
-            :meta
-            ::def/source)))
+      (when cljs-env
+        (let [result (-> (cljs/resolve-var cljs-env s (cljs/confirm-var-exists-throw))
+                         :meta
+                         ::def/source)]
+          (if (and (list? result) (= 'quote (first result)))
+            (second result)
+            result))))
     s))
 
 (defmacro generate-query*
