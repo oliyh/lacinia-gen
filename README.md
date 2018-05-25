@@ -59,8 +59,8 @@ It supports recursive graphs, so the following works too:
 ```clojure
 (let [schema {:objects {:team {:fields {:name {:type 'String}
                                         :players {:type '(list :player)}}}
-                          :player {:fields {:name {:type 'String}
-                                            :team {:type :team}}}}}]
+                        :player {:fields {:name {:type 'String}
+                                          :team {:type :team}}}}}]
 
     (let [gen (lgen/generator schema)]
       (g/sample (gen :team) 5)))
@@ -103,10 +103,10 @@ provide generators for them. You can do so in the following way:
 ```clojure
 (let [schema {:scalars {:Custom {:parse :parse-custom
                                  :serialize :serialize-custom}}
-                :objects {:obj-with-custom
-                          {:fields
-                           {:custom {:type :Custom}
-                            :custom-list {:type '(list :Custom)}}}}}]
+              :objects {:obj-with-custom
+                        {:fields
+                         {:custom {:type :Custom}
+                          :custom-list {:type '(list :Custom)}}}}}]
 
   (let [gen (lgen/generator schema {:scalars {:Custom gen/int}})]
     (g/sample (gen :obj-with-custom) 10)))
@@ -132,7 +132,7 @@ If you have a GraphQL query and wish to generate data for its result, you can us
               :queries {:teams {:type (list :team)
                                 :resolve :resolve-teams}}})
 
-(let [f (query/generate-fn schema)]
+(let [f (query/generate-fn schema {})]
     (f "query { teams { wins players { name } } }" {}))
 
 ;; => {:data
@@ -160,7 +160,7 @@ of the query.
 
 (def query "query { teams { wins } }")
 
-(def data (generate-data* schema query {}))
+(def data (generate-data* schema query {} {}))
 
 data
 ;; => {:data
