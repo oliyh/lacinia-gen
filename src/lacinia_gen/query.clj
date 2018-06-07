@@ -26,7 +26,7 @@
     (cond
       leaf? (get parent field)
       many? (g/sample (generator (get-in field-definition [:type :type :type])) 5)
-      :else (g/generate (generator :field)))))
+      :else (g/generate (generator field)))))
 
 (defn- resolver-map [{:keys [objects queries subscriptions]}]
   (let [resolver-keys (into (resolver-keys objects)
