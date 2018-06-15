@@ -1,11 +1,15 @@
 # lacinia-gen
 
-`lacinia-gen` lets you generate graphs of data using your [lacinia](https://github.com/walmartlabs/lacinia) schema
-and result graphs from GraphQL queries so you can make your tests more rigorous in both Clojure and Clojurescript.
+`lacinia-gen` lets you generate GraphQL responses using your [lacinia](https://github.com/walmartlabs/lacinia) schema
+and GraphQL queries, allowing you to make your tests more rigorous in both Clojure and Clojurescript.
 
 [![Clojars Project](https://img.shields.io/clojars/v/lacinia-gen.svg)](https://clojars.org/lacinia-gen)
 
 ## Usage
+
+There are two main ways to use `lacinia-gen`:
+ - [Full graph](#full-graph) generates the entire graph from any entry point
+ - [Query result](#query-result) generates a response for a particular query
 
 ### Full graph
 
@@ -95,26 +99,6 @@ If you want to limit the number of items in lists, you can do so with the follow
 
 This will ensure that lists of `:player` will have a maximum size of 2.
 
-### Custom scalars
-
-If your schema contains [custom scalars](http://lacinia.readthedocs.io/en/latest/custom-scalars.html) you will need to
-provide generators for them. You can do so in the following way:
-
-```clojure
-(let [schema {:scalars {:Custom {:parse :parse-custom
-                                 :serialize :serialize-custom}}
-              :objects {:obj-with-custom
-                        {:fields
-                         {:custom {:type :Custom}
-                          :custom-list {:type '(list :Custom)}}}}}]
-
-  (let [gen (lgen/generator schema {:scalars {:Custom gen/int}})]
-    (g/sample (gen :obj-with-custom) 10)))
-
-;; => {:custom 23
-       :custom-list (-1 4 16)}
-```
-
 ### Query result
 
 If you have a GraphQL query and wish to generate data for its result, you can use `lacinia-gen.query`.
@@ -170,6 +154,26 @@ data
          {:wins 0)}
          {:wins -3}
          {:wins 0})}
+```
+
+### Custom scalars
+
+If your schema contains [custom scalars](http://lacinia.readthedocs.io/en/latest/custom-scalars.html) you will need to
+provide generators for them. You can do so in the following way:
+
+```clojure
+(let [schema {:scalars {:Custom {:parse :parse-custom
+                                 :serialize :serialize-custom}}
+              :objects {:obj-with-custom
+                        {:fields
+                         {:custom {:type :Custom}
+                          :custom-list {:type '(list :Custom)}}}}}]
+
+  (let [gen (lgen/generator schema {:scalars {:Custom gen/int}})]
+    (g/sample (gen :obj-with-custom) 10)))
+
+;; => {:custom 23
+       :custom-list (-1 4 16)}
 ```
 
 ## Development
