@@ -1,4 +1,4 @@
-(defproject lacinia-gen "0.1.0"
+(defproject lacinia-gen "0.1.1-SNAPSHOT"
   :description "Generators for GraphQL"
   :url "https://github.com/oliyh/lacinia-gen"
   :license {:name "Eclipse Public License"
