@@ -7,7 +7,14 @@
                  [org.clojure/test.check "0.10.0-alpha2"]
                  [com.walmartlabs/lacinia "0.27.0"]
                  [org.clojure/clojurescript "1.10.312"]]
-
+  :release-tasks [["vcs" "assert-committed"]
+                  ["change" "version" "leiningen.release/bump-version" "release"]
+                  ["vcs" "commit"]
+                  ["vcs" "tag" "--no-sign"]
+                  ["deploy" "clojars"]
+                  ["change" "version" "leiningen.release/bump-version"]
+                  ["vcs" "commit"]
+                  ["vcs" "push"]]
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-doo "0.1.8"]]
 
