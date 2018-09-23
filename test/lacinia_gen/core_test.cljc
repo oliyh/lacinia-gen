@@ -1,5 +1,6 @@
 (ns lacinia-gen.core-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require #?(:clj [clojure.test :refer [deftest is testing]]
+               :cljs [cljs.test :refer [deftest is testing]])
             [lacinia-gen.core :as lgen]
             [clojure.test.check.generators :as g]
             [clojure.test.check.generators :as gen]))
